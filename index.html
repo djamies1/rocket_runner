@@ -9,17 +9,19 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
-    background: #000;
     width: 100%;
     height: 100%;
+    background: #000;
     overflow: hidden;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     -webkit-user-select: none;
     user-select: none;
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ffcc;
   }
 
   body {
@@ -27,23 +29,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: 'Share Tech Mono', monospace;
-    color: #00ffcc;
   }
 
   #ui {
     width: 100%;
-    max-width: 800px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
+    padding: 6px 12px;
     flex-shrink: 0;
   }
 
   #ui span {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(9px, 2vw, 13px);
+    font-size: 13px;
     letter-spacing: 2px;
     color: #00ffcc;
     text-shadow: 0 0 10px #00ffcc88;
@@ -51,117 +49,13 @@
 
   #wrapper {
     position: relative;
-    width: 100%;
-    max-width: 800px;
     flex-shrink: 0;
   }
 
   #gameCanvas {
-    border: 1px solid #00ffcc44;
-    box-shadow: 0 0 30px #00ffcc22, inset 0 0 60px #00000088;
     display: block;
-    width: 100%;
-    height: auto;
-    cursor: none;
-  }
-
-  #overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.85);
-    z-index: 10;
-    padding: 20px;
-  }
-
-  #overlay h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(22px, 6vw, 52px);
-    font-weight: 900;
-    letter-spacing: clamp(3px, 1.5vw, 8px);
-    color: #00ffcc;
-    text-shadow: 0 0 20px #00ffcc, 0 0 60px #00ffcc44;
-    margin-bottom: 8px;
-    text-align: center;
-  }
-
-  #overlay .sub {
-    font-size: clamp(9px, 2vw, 13px);
-    letter-spacing: 3px;
-    color: #00ffcc88;
-    margin-bottom: clamp(16px, 4vw, 40px);
-  }
-
-  #overlay .hint {
-    font-size: clamp(10px, 2.2vw, 14px);
-    letter-spacing: 1px;
-    color: #fff;
-    margin-bottom: 6px;
-    text-align: center;
-  }
-
-  #overlay .hint span { color: #00ffcc; }
-
-  .hint-keyboard { display: block; }
-  .hint-touch    { display: none; }
-  @media (pointer: coarse) {
-    .hint-keyboard { display: none; }
-    .hint-touch    { display: block; }
-  }
-
-  #overlay .score-display {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(16px, 4vw, 28px);
-    color: #fff;
-    margin-bottom: 4px;
-    text-shadow: 0 0 10px #ffffff44;
-    text-align: center;
-  }
-
-  #overlay .best-display {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(10px, 2.5vw, 15px);
-    color: #00ffcc88;
-    margin-bottom: clamp(20px, 4vw, 36px);
-    letter-spacing: 2px;
-    text-align: center;
-  }
-
-  #startBtn {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(11px, 2.5vw, 14px);
-    letter-spacing: 4px;
-    padding: clamp(10px, 2.5vw, 14px) clamp(24px, 5vw, 40px);
-    background: transparent;
-    border: 1px solid #00ffcc;
-    color: #00ffcc;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    box-shadow: 0 0 15px #00ffcc33;
-    -webkit-appearance: none;
-    border-radius: 0;
-  }
-
-  #startBtn:hover, #startBtn:active {
-    background: #00ffcc;
-    color: #000;
-    box-shadow: 0 0 30px #00ffcc66;
-  }
-
-  /* Full-canvas tap target on touch devices during play */
-  #tapZone {
-    display: none;
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 4;
-  }
-  @media (pointer: coarse) {
-    #tapZone { display: block; }
-    #gameCanvas { cursor: default; }
+    border: 1px solid #00ffcc44;
+    box-shadow: 0 0 30px #00ffcc22;
   }
 
   .scanline {
@@ -174,6 +68,76 @@
     pointer-events: none;
     z-index: 5;
   }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    z-index: 10;
+    padding: 16px;
+    text-align: center;
+  }
+
+  #overlay h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc, 0 0 60px #00ffcc44;
+    margin-bottom: 6px;
+    /* font-size set dynamically in JS */
+  }
+
+  #overlay .sub {
+    letter-spacing: 3px;
+    color: #00ffcc88;
+    margin-bottom: 24px;
+  }
+
+  #overlay .hint {
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  #overlay .hint span { color: #00ffcc; }
+
+  #overlay .score-display {
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+    margin-bottom: 4px;
+    text-shadow: 0 0 10px #ffffff44;
+  }
+
+  #overlay .best-display {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffcc88;
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 4px;
+    padding: 12px 32px;
+    background: transparent;
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px #00ffcc33;
+    -webkit-appearance: none;
+    border-radius: 0;
+    /* font-size set dynamically */
+  }
+
+  #startBtn:active {
+    background: #00ffcc;
+    color: #000;
+  }
 </style>
 </head>
 <body>
@@ -184,270 +148,335 @@
 </div>
 
 <div id="wrapper">
-  <canvas id="gameCanvas" width="800" height="420"></canvas>
-  <div id="tapZone"></div>
+  <canvas id="gameCanvas"></canvas>
   <div class="scanline"></div>
-
   <div id="overlay">
-    <h1>ROCKET RUNNER</h1>
-    <p class="sub">DEEP SPACE SURVIVAL</p>
+    <h1 id="title">ROCKET RUNNER</h1>
+    <p class="sub" id="sub">DEEP SPACE SURVIVAL</p>
     <div id="deathScore" style="display:none">
       <div class="score-display" id="finalScore"></div>
       <div class="best-display" id="finalBest"></div>
     </div>
-    <p class="hint hint-keyboard">Hold <span>ANY KEY</span> or <span>CLICK</span> to thrust up</p>
-    <p class="hint hint-touch">Tap &amp; hold anywhere to thrust up</p>
-    <p class="hint" style="margin-bottom:20px">Release to fall — avoid the asteroids</p>
+    <p class="hint" id="hint1"></p>
+    <p class="hint" id="hint2" style="margin-bottom:18px">Release to fall — avoid the asteroids</p>
     <button id="startBtn">LAUNCH</button>
   </div>
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-// Fixed internal resolution — CSS scales it to fit the screen
-const W = 800, H = 420;
+// ─────────────────────────────────────────────────────────────────────────────
+// CANVAS + RESPONSIVE SIZING
+// The game uses a fixed logical resolution (GAME_W x GAME_H).
+// We scale the canvas element to fill the available screen space,
+// then use ctx.scale() so all game coordinates stay the same.
+// ─────────────────────────────────────────────────────────────────────────────
+const canvas  = document.getElementById('gameCanvas');
+const ctx     = canvas.getContext('2d');
+const wrapper = document.getElementById('wrapper');
+const ui      = document.getElementById('ui');
 
-const overlay     = document.getElementById('overlay');
-const startBtn    = document.getElementById('startBtn');
-const scoreDisplay= document.getElementById('scoreDisplay');
-const bestDisplay = document.getElementById('bestDisplay');
-const deathScore  = document.getElementById('deathScore');
-const finalScore  = document.getElementById('finalScore');
-const finalBest   = document.getElementById('finalBest');
-const tapZone     = document.getElementById('tapZone');
+const GAME_W = 800, GAME_H = 420;
+const ASPECT  = GAME_W / GAME_H;
 
-// ── Responsive: shrink wrapper to fit viewport ─────────────────────────────
+let scale = 1; // CSS pixel : game pixel ratio
+
 function resize() {
-  const ui     = document.getElementById('ui');
-  const wrapper= document.getElementById('wrapper');
-  const availW = window.innerWidth;
-  const availH = window.innerHeight - ui.offsetHeight - 4;
-  const aspect = W / H; // 800/420
-  let w = Math.min(availW, 800);
-  let h = w / aspect;
-  if (h > availH) { h = availH; w = h * aspect; }
-  wrapper.style.width = Math.floor(w) + 'px';
+  const screenW = window.innerWidth;
+  const screenH = window.innerHeight;
+  const uiH     = ui.offsetHeight || 32;
+  const availH  = screenH - uiH - 2;
+
+  let w = screenW;
+  let h = w / ASPECT;
+  if (h > availH) { h = availH; w = h * ASPECT; }
+
+  // Set the canvas *pixel* size to the game resolution (sharp rendering)
+  canvas.width  = GAME_W;
+  canvas.height = GAME_H;
+
+  // Scale the canvas *element* to fit the screen via CSS
+  canvas.style.width  = Math.floor(w) + 'px';
+  canvas.style.height = Math.floor(h) + 'px';
+  wrapper.style.width  = Math.floor(w) + 'px';
+  wrapper.style.height = Math.floor(h) + 'px';
+
+  scale = w / GAME_W;
+
+  // Scale overlay text
+  const fs = Math.max(10, Math.floor(w * 0.055));
+  document.getElementById('title').style.fontSize     = Math.min(fs, 48) + 'px';
+  document.getElementById('sub').style.fontSize       = Math.max(9,  Math.floor(w * 0.018)) + 'px';
+  document.querySelectorAll('.hint').forEach(el => el.style.fontSize = Math.max(10, Math.floor(w * 0.022)) + 'px');
+  document.querySelectorAll('.score-display').forEach(el => el.style.fontSize = Math.max(14, Math.floor(w * 0.038)) + 'px');
+  document.querySelectorAll('.best-display').forEach(el  => el.style.fontSize = Math.max(10, Math.floor(w * 0.022)) + 'px');
+  document.getElementById('startBtn').style.fontSize  = Math.max(11, Math.floor(w * 0.022)) + 'px';
+
+  // Update hint text based on input type
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  document.getElementById('hint1').innerHTML = isTouch
+    ? 'Tap &amp; hold anywhere to thrust up'
+    : 'Hold <span>ANY KEY</span> or <span>CLICK</span> to thrust up';
 }
+
 resize();
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+window.addEventListener('orientationchange', () => { setTimeout(resize, 300); });
 
-// ── Game state ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const overlay      = document.getElementById('overlay');
+const startBtn     = document.getElementById('startBtn');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const bestDisplay  = document.getElementById('bestDisplay');
+const deathScore   = document.getElementById('deathScore');
+const finalScore   = document.getElementById('finalScore');
+const finalBest    = document.getElementById('finalBest');
+
 let state = 'menu';
 let score = 0, best = 0, frame = 0;
 let thrusting = false;
 
-let rocket = { x: 140, y: H/2, vy: 0, radius: 14 };
+let rocket = { x: 140, y: GAME_H / 2, vy: 0, radius: 14 };
 const GRAVITY = 0.32, THRUST = -0.6, MAX_VY = 7;
 
 let asteroids = [], astTimer = 0, astInterval = 90, speed = 3.5;
 let particles = [];
 let rocketAngle = 0;
 
-const stars = Array.from({length: 120}, () => ({
-  x: Math.random()*W, y: Math.random()*H,
-  r: Math.random()*1.5+0.3,
-  speed: Math.random()*0.5+0.1,
+const stars = Array.from({ length: 120 }, () => ({
+  x: Math.random() * GAME_W, y: Math.random() * GAME_H,
+  r: Math.random() * 1.5 + 0.3,
+  speed: Math.random() * 0.5 + 0.1,
   brightness: Math.random()
 }));
 
-function fmt(n) { return String(Math.floor(n)).padStart(6,'0'); }
+function fmt(n) { return String(Math.floor(n)).padStart(6, '0'); }
 
-// ── Spawning ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SPAWNING
+// ─────────────────────────────────────────────────────────────────────────────
 function spawnAsteroid() {
-  const minGap = 115, maxGap = 200;
   if (Math.random() < 0.55) {
-    const gapCenter = 60 + Math.random()*(H-120);
-    const gapSize   = minGap + Math.random()*(maxGap-minGap);
-    const topH = gapCenter - gapSize/2;
-    const botH = H - (gapCenter + gapSize/2);
-    if (topH>30) asteroids.push({x:W+40, y:topH/2,     w:32+Math.random()*20, h:topH, type:'block'});
-    if (botH>30) asteroids.push({x:W+40, y:H-botH/2,   w:32+Math.random()*20, h:botH, type:'block'});
+    const gapCenter = 60 + Math.random() * (GAME_H - 120);
+    const gapSize   = 115 + Math.random() * 85;
+    const topH = gapCenter - gapSize / 2;
+    const botH = GAME_H - (gapCenter + gapSize / 2);
+    if (topH > 30) asteroids.push({ x: GAME_W + 40, y: topH / 2,        w: 32 + Math.random() * 20, h: topH, type: 'block' });
+    if (botH > 30) asteroids.push({ x: GAME_W + 40, y: GAME_H - botH/2, w: 32 + Math.random() * 20, h: botH, type: 'block' });
   } else {
-    const size = 20+Math.random()*30;
-    asteroids.push({x:W+40, y:size+Math.random()*(H-size*2), w:size, h:size,
-      type:'rock', angle:Math.random()*Math.PI*2, spin:(Math.random()-0.5)*0.05});
+    const size = 20 + Math.random() * 30;
+    asteroids.push({
+      x: GAME_W + 40, y: size + Math.random() * (GAME_H - size * 2),
+      w: size, h: size, type: 'rock',
+      angle: Math.random() * Math.PI * 2,
+      spin: (Math.random() - 0.5) * 0.05
+    });
   }
 }
 
 function spawnThrust() {
-  for (let i=0;i<3;i++) particles.push({
-    x:rocket.x-18, y:rocket.y+(Math.random()-0.5)*8,
-    vx:-2-Math.random()*3, vy:(Math.random()-0.5)*1.5,
-    life:1, decay:0.06+Math.random()*0.04,
-    size:3+Math.random()*4,
-    color:Math.random()<0.5?'#ff6600':'#ffcc00'
+  for (let i = 0; i < 3; i++) particles.push({
+    x: rocket.x - 18, y: rocket.y + (Math.random() - 0.5) * 8,
+    vx: -2 - Math.random() * 3, vy: (Math.random() - 0.5) * 1.5,
+    life: 1, decay: 0.06 + Math.random() * 0.04,
+    size: 3 + Math.random() * 4,
+    color: Math.random() < 0.5 ? '#ff6600' : '#ffcc00'
   });
 }
 
-function spawnExplosion(x,y) {
-  for (let i=0;i<40;i++){
-    const a=Math.random()*Math.PI*2, s=1+Math.random()*5;
-    particles.push({x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
-      life:1, decay:0.025+Math.random()*0.02, size:2+Math.random()*5,
-      color:['#ff4400','#ff8800','#ffcc00','#ffffff','#00ffcc'][Math.floor(Math.random()*5)]});
+function spawnExplosion(x, y) {
+  for (let i = 0; i < 40; i++) {
+    const a = Math.random() * Math.PI * 2, s = 1 + Math.random() * 5;
+    particles.push({
+      x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 1, decay: 0.025 + Math.random() * 0.02, size: 2 + Math.random() * 5,
+      color: ['#ff4400','#ff8800','#ffcc00','#ffffff','#00ffcc'][Math.floor(Math.random() * 5)]
+    });
   }
 }
 
-// ── Drawing ────────────────────────────────────────────────────────────────
-function drawRocket(x,y,angle){
-  ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
-  if(thrusting){
-    const g=ctx.createRadialGradient(-18,0,0,-18,0,22);
-    g.addColorStop(0,'rgba(255,150,0,0.6)'); g.addColorStop(1,'rgba(255,100,0,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(-18,0,22,0,Math.PI*2); ctx.fill();
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAWING  (all in game-space 800×420)
+// ─────────────────────────────────────────────────────────────────────────────
+function drawBg() {
+  const bg = ctx.createLinearGradient(0, 0, GAME_W, 0);
+  bg.addColorStop(0, '#000510'); bg.addColorStop(1, '#000310');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, GAME_W, GAME_H);
+
+  ctx.save(); ctx.globalAlpha = 0.04;
+  ctx.fillStyle = '#0066ff'; ctx.beginPath(); ctx.ellipse(GAME_W*.7, GAME_H*.3, 200, 80, 0.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#00cc88'; ctx.beginPath(); ctx.ellipse(GAME_W*.3, GAME_H*.7, 150, 60, -.3, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  for (const s of stars) {
+    s.x -= s.speed * (state === 'playing' ? 1 : 0.3);
+    if (s.x < 0) { s.x = GAME_W; s.y = Math.random() * GAME_H; }
+    ctx.globalAlpha = 0.4 + s.brightness * 0.6;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
   }
-  ctx.fillStyle='#c0d8ff';
+  ctx.globalAlpha = 1;
+}
+
+function drawRocket(x, y, angle) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+  if (thrusting) {
+    const g = ctx.createRadialGradient(-18, 0, 0, -18, 0, 22);
+    g.addColorStop(0, 'rgba(255,150,0,0.6)'); g.addColorStop(1, 'rgba(255,100,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(-18, 0, 22, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle = '#c0d8ff';
   ctx.beginPath(); ctx.moveTo(22,0); ctx.lineTo(-12,-8); ctx.lineTo(-18,0); ctx.lineTo(-12,8); ctx.closePath(); ctx.fill();
-  const cg=ctx.createRadialGradient(6,-2,1,6,-2,7);
+  const cg = ctx.createRadialGradient(6,-2,1,6,-2,7);
   cg.addColorStop(0,'#aaffee'); cg.addColorStop(1,'#006699');
-  ctx.fillStyle=cg; ctx.beginPath(); ctx.ellipse(6,0,7,5,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#8899cc';
+  ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(6,0,7,5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#8899cc';
   ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(-10,-20); ctx.lineTo(-16,-8); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(0,8);  ctx.lineTo(-10,20);  ctx.lineTo(-16,8);  ctx.closePath(); ctx.fill();
-  ctx.fillStyle='#556688';
+  ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(-10, 20); ctx.lineTo(-16, 8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#556688';
   ctx.beginPath(); ctx.moveTo(-12,-5); ctx.lineTo(-20,-8); ctx.lineTo(-20,8); ctx.lineTo(-12,5); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 
-function drawAsteroid(a){
-  if(a.type==='block'){
-    ctx.save(); ctx.translate(a.x,a.y);
-    const hh=a.h/2,hw=a.w/2;
-    ctx.fillStyle='#3a3330'; ctx.fillRect(-hw,-hh,a.w,a.h);
-    ctx.fillStyle='#2a2420';
-    for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(-hw+Math.random()*a.w,-hh+Math.random()*a.h,4+Math.random()*8,0,Math.PI*2);ctx.fill();}
-    ctx.strokeStyle='#554744'; ctx.lineWidth=1; ctx.strokeRect(-hw,-hh,a.w,a.h);
-    const eg=ctx.createLinearGradient(hw,0,hw-6,0);
+function drawAsteroid(a) {
+  if (a.type === 'block') {
+    ctx.save(); ctx.translate(a.x, a.y);
+    const hh = a.h/2, hw = a.w/2;
+    ctx.fillStyle = '#3a3330'; ctx.fillRect(-hw, -hh, a.w, a.h);
+    ctx.fillStyle = '#2a2420';
+    for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(-hw + Math.random()*a.w, -hh + Math.random()*a.h, 4+Math.random()*8, 0, Math.PI*2); ctx.fill(); }
+    ctx.strokeStyle = '#554744'; ctx.lineWidth = 1; ctx.strokeRect(-hw,-hh,a.w,a.h);
+    const eg = ctx.createLinearGradient(hw,0,hw-6,0);
     eg.addColorStop(0,'rgba(255,100,50,0.3)'); eg.addColorStop(1,'rgba(255,100,50,0)');
-    ctx.fillStyle=eg; ctx.fillRect(hw-6,-hh,6,a.h);
+    ctx.fillStyle = eg; ctx.fillRect(hw-6,-hh,6,a.h);
     ctx.restore();
   } else {
-    ctx.save(); ctx.translate(a.x,a.y); ctx.rotate(a.angle);
-    const r=a.w/2;
-    const rg=ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r);
-    rg.addColorStop(0,'#605550'); rg.addColorStop(0.6,'#3a3330'); rg.addColorStop(1,'#1a1210');
-    ctx.fillStyle=rg;
-    const offsets=[0.9,1.15,0.85,1.1,0.95,1.2,0.8,1.05];
+    ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.angle);
+    const r = a.w/2;
+    const rg = ctx.createRadialGradient(-r*.3,-r*.3,0,0,0,r);
+    rg.addColorStop(0,'#605550'); rg.addColorStop(.6,'#3a3330'); rg.addColorStop(1,'#1a1210');
+    ctx.fillStyle = rg;
+    const off = [0.9,1.15,0.85,1.1,0.95,1.2,0.8,1.05];
     ctx.beginPath();
-    for(let i=0;i<8;i++){
-      const ang=(i/8)*Math.PI*2, rv=r*offsets[i];
-      i===0?ctx.moveTo(Math.cos(ang)*rv,Math.sin(ang)*rv):ctx.lineTo(Math.cos(ang)*rv,Math.sin(ang)*rv);
+    for (let i = 0; i < 8; i++) {
+      const ang = (i/8)*Math.PI*2, rv = r*off[i];
+      i===0 ? ctx.moveTo(Math.cos(ang)*rv, Math.sin(ang)*rv) : ctx.lineTo(Math.cos(ang)*rv, Math.sin(ang)*rv);
     }
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='#554744'; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.strokeStyle = '#554744'; ctx.lineWidth = 0.5; ctx.stroke();
     ctx.restore();
   }
 }
 
-function drawBg(){
-  const bg=ctx.createLinearGradient(0,0,W,0);
-  bg.addColorStop(0,'#000510'); bg.addColorStop(1,'#000310');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  ctx.save(); ctx.globalAlpha=0.04;
-  ctx.fillStyle='#0066ff'; ctx.beginPath(); ctx.ellipse(W*0.7,H*0.3,200,80,0.2,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#00cc88'; ctx.beginPath(); ctx.ellipse(W*0.3,H*0.7,150,60,-0.3,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-  for(let s of stars){
-    s.x -= s.speed*(state==='playing'?1:0.3);
-    if(s.x<0){s.x=W; s.y=Math.random()*H;}
-    ctx.globalAlpha=0.4+s.brightness*0.6;
-    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+// ─────────────────────────────────────────────────────────────────────────────
+// COLLISION
+// ─────────────────────────────────────────────────────────────────────────────
+function checkCollision(a) {
+  const rx = rocket.x, ry = rocket.y, rr = rocket.radius - 3;
+  if (a.type === 'block') {
+    const cx = Math.max(a.x - a.w/2, Math.min(rx, a.x + a.w/2));
+    const cy = Math.max(a.y - a.h/2, Math.min(ry, a.y + a.h/2));
+    return Math.hypot(rx-cx, ry-cy) < rr;
   }
-  ctx.globalAlpha=1;
+  return Math.hypot(rx - a.x, ry - a.y) < rr + a.w/2 - 4;
 }
 
-// ── Collision ──────────────────────────────────────────────────────────────
-function checkCollision(a){
-  const rx=rocket.x, ry=rocket.y, rr=rocket.radius-3;
-  if(a.type==='block'){
-    const cx=Math.max(a.x-a.w/2,Math.min(rx,a.x+a.w/2));
-    const cy=Math.max(a.y-a.h/2,Math.min(ry,a.y+a.h/2));
-    return Math.hypot(rx-cx,ry-cy)<rr;
-  }
-  return Math.hypot(rx-a.x,ry-a.y)<rr+a.w/2-4;
-}
-
-// ── Update / render ────────────────────────────────────────────────────────
-function update(){
-  if(state!=='playing') return;
-  frame++; score+=0.1;
-  speed=3.5+score*0.0015;
-  astInterval=Math.max(55,90-score*0.02);
+// ─────────────────────────────────────────────────────────────────────────────
+// UPDATE / RENDER LOOP
+// ─────────────────────────────────────────────────────────────────────────────
+function update() {
+  if (state !== 'playing') return;
+  frame++; score += 0.1;
+  speed       = 3.5 + score * 0.0015;
+  astInterval = Math.max(55, 90 - score * 0.02);
 
   rocket.vy += thrusting ? THRUST : GRAVITY;
-  if(thrusting) spawnThrust();
-  rocket.vy=Math.max(-MAX_VY,Math.min(MAX_VY,rocket.vy));
-  rocket.y+=rocket.vy;
-  rocketAngle+=(rocket.vy*0.04-rocketAngle)*0.12;
+  if (thrusting) spawnThrust();
+  rocket.vy = Math.max(-MAX_VY, Math.min(MAX_VY, rocket.vy));
+  rocket.y += rocket.vy;
+  rocketAngle += (rocket.vy * 0.04 - rocketAngle) * 0.12;
 
-  if(rocket.y<rocket.radius){rocket.y=rocket.radius; rocket.vy=0;}
-  if(rocket.y>H-rocket.radius){rocket.y=H-rocket.radius; rocket.vy=0; die(); return;}
+  if (rocket.y < rocket.radius)            { rocket.y = rocket.radius;            rocket.vy = 0; }
+  if (rocket.y > GAME_H - rocket.radius)   { rocket.y = GAME_H - rocket.radius;   rocket.vy = 0; die(); return; }
 
-  if(++astTimer>=astInterval){astTimer=0; spawnAsteroid();}
-  for(let a of asteroids){a.x-=speed; if(a.type==='rock') a.angle+=a.spin;}
-  asteroids=asteroids.filter(a=>a.x>-80);
-  for(let a of asteroids) if(checkCollision(a)){die(); return;}
+  if (++astTimer >= astInterval) { astTimer = 0; spawnAsteroid(); }
+  for (const a of asteroids) { a.x -= speed; if (a.type === 'rock') a.angle += a.spin; }
+  asteroids = asteroids.filter(a => a.x > -80);
+  for (const a of asteroids) { if (checkCollision(a)) { die(); return; } }
 
-  for(let p of particles){p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;}
-  particles=particles.filter(p=>p.life>0);
-  scoreDisplay.textContent=fmt(score);
+  for (const p of particles) { p.x += p.vx; p.y += p.vy; p.life -= p.decay; }
+  particles = particles.filter(p => p.life > 0);
+  scoreDisplay.textContent = fmt(score);
 }
 
-function render(){
+function render() {
   drawBg();
-  for(let p of particles){
-    ctx.globalAlpha=p.life*0.85; ctx.fillStyle=p.color;
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+  for (const p of particles) {
+    ctx.globalAlpha = p.life * 0.85; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2); ctx.fill();
   }
-  ctx.globalAlpha=1;
-  for(let a of asteroids) drawAsteroid(a);
-  if(state==='playing') drawRocket(rocket.x,rocket.y,rocketAngle);
+  ctx.globalAlpha = 1;
+  for (const a of asteroids) drawAsteroid(a);
+  if (state === 'playing') drawRocket(rocket.x, rocket.y, rocketAngle);
 }
 
-function loop(){ update(); render(); requestAnimationFrame(loop); }
+function loop() { update(); render(); requestAnimationFrame(loop); }
 
-// ── Game lifecycle ─────────────────────────────────────────────────────────
-function die(){
-  state='dead';
-  spawnExplosion(rocket.x,rocket.y);
-  if(score>best) best=score;
-  bestDisplay.textContent=fmt(best);
-  setTimeout(()=>{
-    finalScore.textContent='SCORE  '+fmt(score);
-    finalBest.textContent ='BEST   '+fmt(best);
-    deathScore.style.display='block';
-    startBtn.textContent='RETRY';
-    overlay.style.display='flex';
-  },600);
+// ─────────────────────────────────────────────────────────────────────────────
+// LIFECYCLE
+// ─────────────────────────────────────────────────────────────────────────────
+function die() {
+  state = 'dead';
+  spawnExplosion(rocket.x, rocket.y);
+  if (score > best) best = score;
+  bestDisplay.textContent = fmt(best);
+  setTimeout(() => {
+    finalScore.textContent = 'SCORE  ' + fmt(score);
+    finalBest.textContent  = 'BEST   ' + fmt(best);
+    deathScore.style.display = 'block';
+    startBtn.textContent = 'RETRY';
+    overlay.style.display = 'flex';
+  }, 600);
 }
 
-function startGame(){
-  state='playing'; score=0; frame=0; thrusting=false;
-  rocket={x:140,y:H/2,vy:0,radius:14};
-  asteroids=[]; particles=[]; astTimer=0; rocketAngle=0;
-  overlay.style.display='none';
-  deathScore.style.display='none';
+function startGame() {
+  state = 'playing'; score = 0; frame = 0; thrusting = false;
+  rocket = { x: 140, y: GAME_H/2, vy: 0, radius: 14 };
+  asteroids = []; particles = []; astTimer = 0; rocketAngle = 0;
+  overlay.style.display = 'none';
+  deathScore.style.display = 'none';
 }
 
-// ── Input ──────────────────────────────────────────────────────────────────
-// Keyboard
-document.addEventListener('keydown', ()=>{ if(state==='playing') thrusting=true; });
-document.addEventListener('keyup',   ()=>{ thrusting=false; });
+// ─────────────────────────────────────────────────────────────────────────────
+// INPUT  — keyboard, mouse, touch all handled
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', () => { if (state === 'playing') thrusting = true; });
+document.addEventListener('keyup',   () => { thrusting = false; });
 
-// Mouse
-canvas.addEventListener('mousedown', ()=>{ if(state==='playing') thrusting=true; });
-document.addEventListener('mouseup',  ()=>{ thrusting=false; });
+// Mouse on canvas
+canvas.addEventListener('mousedown', () => { if (state === 'playing') thrusting = true; });
+document.addEventListener('mouseup',  () => { thrusting = false; });
 
-// Touch — a transparent div covers the canvas so taps don't misfire on the overlay
-tapZone.addEventListener('touchstart', e=>{ e.preventDefault(); if(state==='playing') thrusting=true; }, {passive:false});
-tapZone.addEventListener('touchend',   e=>{ e.preventDefault(); thrusting=false; }, {passive:false});
-tapZone.addEventListener('touchcancel',()=>{ thrusting=false; });
+// Touch anywhere on the canvas/wrapper (not the button)
+function onTouchStart(e) {
+  // Don't intercept taps on the start button
+  if (e.target === startBtn) return;
+  e.preventDefault();
+  if (state === 'playing') thrusting = true;
+}
+function onTouchEnd(e) {
+  if (e.target === startBtn) return;
+  e.preventDefault();
+  thrusting = false;
+}
 
-// Button works on both click and tap
+// Attach to document so the whole screen is a thrust zone during play
+document.addEventListener('touchstart',  onTouchStart, { passive: false });
+document.addEventListener('touchend',    onTouchEnd,   { passive: false });
+document.addEventListener('touchcancel', () => { thrusting = false; });
+
 startBtn.addEventListener('click',    startGame);
-startBtn.addEventListener('touchend', e=>{ e.preventDefault(); startGame(); });
+startBtn.addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); startGame(); });
 
 loop();
 </script>

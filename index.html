@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROCKET RUNNER</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ffcc;
+  }
+
+  #ui {
+    width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+  }
+
+  #ui span {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #00ffcc;
+    text-shadow: 0 0 10px #00ffcc88;
+  }
+
+  #gameCanvas {
+    border: 1px solid #00ffcc44;
+    box-shadow: 0 0 30px #00ffcc22, inset 0 0 60px #00000088;
+    display: block;
+    cursor: none;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    z-index: 10;
+  }
+
+  #overlay h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc, 0 0 60px #00ffcc44;
+    margin-bottom: 12px;
+  }
+
+  #overlay .sub {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: #00ffcc88;
+    margin-bottom: 40px;
+  }
+
+  #overlay .hint {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  #overlay .hint span {
+    color: #00ffcc;
+  }
+
+  #overlay .score-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    color: #fff;
+    margin-bottom: 6px;
+    text-shadow: 0 0 10px #ffffff44;
+  }
+
+  #overlay .best-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    color: #00ffcc88;
+    margin-bottom: 36px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    letter-spacing: 4px;
+    padding: 14px 40px;
+    background: transparent;
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px #00ffcc33;
+  }
+
+  #startBtn:hover {
+    background: #00ffcc;
+    color: #000;
+    box-shadow: 0 0 30px #00ffcc66;
+  }
+
+  .scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,204,0.015) 2px,
+      rgba(0,255,204,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  #wrapper {
+    position: relative;
+    width: 800px;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <span>SCORE: <span id="scoreDisplay">000000</span></span>
+  <span>BEST: <span id="bestDisplay">000000</span></span>
+</div>
+
+<div id="wrapper">
+  <canvas id="gameCanvas" width="800" height="420"></canvas>
+  <div class="scanline"></div>
+
+  <div id="overlay">
+    <h1>ROCKET RUNNER</h1>
+    <p class="sub">DEEP SPACE SURVIVAL</p>
+    <div id="deathScore" style="display:none">
+      <div class="score-display" id="finalScore"></div>
+      <div class="best-display" id="finalBest"></div>
+    </div>
+    <p class="hint">Hold <span>ANY KEY</span> or <span>CLICK</span> to thrust up</p>
+    <p class="hint" style="margin-bottom:30px">Release to fall — avoid the asteroids</p>
+    <button id="startBtn">LAUNCH</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const bestDisplay = document.getElementById('bestDisplay');
+const deathScore = document.getElementById('deathScore');
+const finalScore = document.getElementById('finalScore');
+const finalBest = document.getElementById('finalBest');
+
+let state = 'menu'; // menu | playing | dead
+let score = 0, best = 0, frame = 0;
+let thrusting = false;
+
+// Rocket
+let rocket = { x: 140, y: H/2, vy: 0, radius: 14 };
+const GRAVITY = 0.32;
+const THRUST = -0.6;
+const MAX_VY = 7;
+
+// Asteroids
+let asteroids = [];
+let astTimer = 0;
+let astInterval = 90;
+let speed = 3.5;
+
+// Stars
+const stars = Array.from({length: 120}, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H,
+  r: Math.random() * 1.5 + 0.3,
+  speed: Math.random() * 0.5 + 0.1,
+  brightness: Math.random()
+}));
+
+// Particles
+let particles = [];
+
+function fmt(n) { return String(Math.floor(n)).padStart(6, '0'); }
+
+function spawnAsteroid() {
+  const minGap = 110;
+  const maxGap = 200;
+  // Sometimes spawn paired asteroids with a gap
+  const paired = Math.random() < 0.55;
+  if (paired) {
+    const gapCenter = 60 + Math.random() * (H - 120);
+    const gapSize = minGap + Math.random() * (maxGap - minGap);
+    const topH = gapCenter - gapSize / 2;
+    const botH = H - (gapCenter + gapSize / 2);
+    if (topH > 30) asteroids.push({ x: W + 40, y: topH/2, w: 32+Math.random()*20, h: topH, type:'block' });
+    if (botH > 30) asteroids.push({ x: W + 40, y: H - botH/2, w: 32+Math.random()*20, h: botH, type:'block' });
+  } else {
+    // Single floating asteroid
+    const size = 20 + Math.random() * 30;
+    const y = size + Math.random() * (H - size*2);
+    asteroids.push({ x: W + 40, y, w: size, h: size, type:'rock', angle: Math.random()*Math.PI*2, spin: (Math.random()-0.5)*0.05 });
+  }
+}
+
+function spawnThrust() {
+  for (let i = 0; i < 3; i++) {
+    particles.push({
+      x: rocket.x - 18,
+      y: rocket.y + (Math.random()-0.5)*8,
+      vx: -2 - Math.random()*3,
+      vy: (Math.random()-0.5)*1.5,
+      life: 1,
+      decay: 0.06 + Math.random()*0.04,
+      size: 3 + Math.random()*4,
+      color: Math.random() < 0.5 ? '#ff6600' : '#ffcc00'
+    });
+  }
+}
+
+function spawnExplosion(x, y) {
+  for (let i = 0; i < 40; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = 1 + Math.random() * 5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*spd,
+      vy: Math.sin(angle)*spd,
+      life: 1,
+      decay: 0.025 + Math.random()*0.02,
+      size: 2 + Math.random()*5,
+      color: ['#ff4400','#ff8800','#ffcc00','#ffffff','#00ffcc'][Math.floor(Math.random()*5)]
+    });
+  }
+}
+
+function drawRocket(x, y, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Engine glow
+  if (thrusting) {
+    const g = ctx.createRadialGradient(-18, 0, 0, -18, 0, 22);
+    g.addColorStop(0, 'rgba(255,150,0,0.6)');
+    g.addColorStop(1, 'rgba(255,100,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(-18, 0, 22, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Body
+  ctx.fillStyle = '#c0d8ff';
+  ctx.beginPath();
+  ctx.moveTo(22, 0);
+  ctx.lineTo(-12, -8);
+  ctx.lineTo(-18, 0);
+  ctx.lineTo(-12, 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Cockpit
+  const cg = ctx.createRadialGradient(6, -2, 1, 6, -2, 7);
+  cg.addColorStop(0, '#aaffee');
+  cg.addColorStop(1, '#006699');
+  ctx.fillStyle = cg;
+  ctx.beginPath();
+  ctx.ellipse(6, 0, 7, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Wing top
+  ctx.fillStyle = '#8899cc';
+  ctx.beginPath();
+  ctx.moveTo(0, -8);
+  ctx.lineTo(-10, -20);
+  ctx.lineTo(-16, -8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wing bottom
+  ctx.beginPath();
+  ctx.moveTo(0, 8);
+  ctx.lineTo(-10, 20);
+  ctx.lineTo(-16, 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Exhaust nozzle
+  ctx.fillStyle = '#556688';
+  ctx.beginPath();
+  ctx.moveTo(-12, -5);
+  ctx.lineTo(-20, -8);
+  ctx.lineTo(-20, 8);
+  ctx.lineTo(-12, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawAsteroid(a) {
+  if (a.type === 'block') {
+    // Rocky wall chunk
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    const hh = a.h/2, hw = a.w/2;
+    
+    // Base rock
+    ctx.fillStyle = '#3a3330';
+    ctx.fillRect(-hw, -hh, a.w, a.h);
+    
+    // Rocky texture overlay
+    ctx.fillStyle = '#2a2420';
+    for (let i = 0; i < 6; i++) {
+      const rx = -hw + Math.random()*a.w;
+      const ry = -hh + Math.random()*a.h;
+      ctx.beginPath();
+      ctx.arc(rx, ry, 4+Math.random()*8, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Highlight edge
+    ctx.strokeStyle = '#554744';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-hw, -hh, a.w, a.h);
+
+    // Glowing edge facing player
+    const eg = ctx.createLinearGradient(hw, 0, hw-6, 0);
+    eg.addColorStop(0, 'rgba(255,100,50,0.3)');
+    eg.addColorStop(1, 'rgba(255,100,50,0)');
+    ctx.fillStyle = eg;
+    ctx.fillRect(hw-6, -hh, 6, a.h);
+
+    ctx.restore();
+  } else {
+    // Floating rock
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.rotate(a.angle);
+    const r = a.w/2;
+
+    const rg = ctx.createRadialGradient(-r*0.3, -r*0.3, 0, 0, 0, r);
+    rg.addColorStop(0, '#605550');
+    rg.addColorStop(0.6, '#3a3330');
+    rg.addColorStop(1, '#1a1210');
+    ctx.fillStyle = rg;
+
+    ctx.beginPath();
+    const pts = 8;
+    for (let i = 0; i < pts; i++) {
+      const ang = (i / pts) * Math.PI * 2;
+      const rad = r * (0.75 + Math.random()*0.0 + (i%2===0?0.2:0));
+      // pre-seeded shape: use deterministic offsets
+      const offsets = [0.9,1.15,0.85,1.1,0.95,1.2,0.8,1.05];
+      const rv = r * offsets[i];
+      i === 0 ? ctx.moveTo(Math.cos(ang)*rv, Math.sin(ang)*rv)
+               : ctx.lineTo(Math.cos(ang)*rv, Math.sin(ang)*rv);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#554744';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+function checkCollision(a) {
+  const rx = rocket.x, ry = rocket.y, rr = rocket.radius - 3;
+  if (a.type === 'block') {
+    const left = a.x - a.w/2, right = a.x + a.w/2;
+    const top = a.y - a.h/2, bot = a.y + a.h/2;
+    const cx = Math.max(left, Math.min(rx, right));
+    const cy = Math.max(top, Math.min(ry, bot));
+    return Math.hypot(rx-cx, ry-cy) < rr;
+  } else {
+    return Math.hypot(rx - a.x, ry - a.y) < rr + a.w/2 - 4;
+  }
+}
+
+let rocketAngle = 0;
+
+function update() {
+  if (state !== 'playing') return;
+  frame++;
+  score += 0.1;
+
+  // Increase difficulty
+  speed = 3.5 + score * 0.0015;
+  astInterval = Math.max(55, 90 - score * 0.02);
+
+  // Thrust
+  if (thrusting) {
+    rocket.vy += THRUST;
+    spawnThrust();
+  } else {
+    rocket.vy += GRAVITY;
+  }
+  rocket.vy = Math.max(-MAX_VY, Math.min(MAX_VY, rocket.vy));
+  rocket.y += rocket.vy;
+
+  // Tilt rocket with velocity
+  rocketAngle += (rocket.vy * 0.04 - rocketAngle) * 0.12;
+
+  // Bounds
+  if (rocket.y < rocket.radius) { rocket.y = rocket.radius; rocket.vy = 0; }
+  if (rocket.y > H - rocket.radius) { rocket.y = H - rocket.radius; rocket.vy = 0; die(); return; }
+
+  // Asteroids
+  astTimer++;
+  if (astTimer >= astInterval) { astTimer = 0; spawnAsteroid(); }
+  for (let a of asteroids) {
+    a.x -= speed;
+    if (a.type === 'rock') a.angle += a.spin;
+  }
+  asteroids = asteroids.filter(a => a.x > -80);
+
+  // Collision
+  for (let a of asteroids) {
+    if (checkCollision(a)) { die(); return; }
+  }
+
+  // Particles
+  for (let p of particles) {
+    p.x += p.vx; p.y += p.vy;
+    p.life -= p.decay;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  scoreDisplay.textContent = fmt(score);
+}
+
+function die() {
+  state = 'dead';
+  spawnExplosion(rocket.x, rocket.y);
+  if (score > best) best = score;
+  bestDisplay.textContent = fmt(best);
+
+  setTimeout(() => {
+    finalScore.textContent = 'SCORE  ' + fmt(score);
+    finalBest.textContent = 'BEST   ' + fmt(best);
+    deathScore.style.display = 'block';
+    startBtn.textContent = 'RETRY';
+    overlay.style.display = 'flex';
+  }, 600);
+}
+
+function startGame() {
+  state = 'playing';
+  score = 0; frame = 0;
+  rocket = { x: 140, y: H/2, vy: 0, radius: 14 };
+  asteroids = [];
+  particles = [];
+  astTimer = 0;
+  rocketAngle = 0;
+  overlay.style.display = 'none';
+  deathScore.style.display = 'none';
+}
+
+function drawBg() {
+  // Deep space bg
+  const bg = ctx.createLinearGradient(0, 0, W, 0);
+  bg.addColorStop(0, '#000510');
+  bg.addColorStop(1, '#000310');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Nebula wisps
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.fillStyle = '#0066ff';
+  ctx.beginPath();
+  ctx.ellipse(W*0.7, H*0.3, 200, 80, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#00cc88';
+  ctx.beginPath();
+  ctx.ellipse(W*0.3, H*0.7, 150, 60, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Stars (scrolling)
+  for (let s of stars) {
+    s.x -= s.speed * (state === 'playing' ? 1 : 0.3);
+    if (s.x < 0) { s.x = W; s.y = Math.random() * H; }
+    ctx.globalAlpha = 0.4 + s.brightness * 0.6;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  drawBg();
+
+  // Particles behind
+  for (let p of particles) {
+    ctx.globalAlpha = p.life * 0.85;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Asteroids
+  for (let a of asteroids) drawAsteroid(a);
+
+  // Rocket (only if playing or briefly after death)
+  if (state === 'playing') {
+    drawRocket(rocket.x, rocket.y, rocketAngle);
+  } else if (state === 'dead') {
+    // Late particles from explosion
+    ctx.globalAlpha = 0;
+  }
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// Input
+document.addEventListener('keydown', e => { thrusting = true; });
+document.addEventListener('keyup', e => { thrusting = false; });
+canvas.addEventListener('mousedown', () => { thrusting = true; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); thrusting = true; }, {passive:false});
+document.addEventListener('mouseup', () => { thrusting = false; });
+canvas.addEventListener('touchend', () => { thrusting = false; });
+
+startBtn.addEventListener('click', startGame);
+
+loop();
+</script>
+</body>
+</html>
